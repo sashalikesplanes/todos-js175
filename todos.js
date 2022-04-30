@@ -14,6 +14,7 @@ const { urlencoded } = require("express");
 
 app.set("views", "./views");
 app.set("view engine", "pug");
+console.log("hello woooorld");
 
 app.use(morgan("common"));
 app.use(express.static("public"));
