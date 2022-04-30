@@ -5,7 +5,12 @@ block main
   if todoLists === undefined || todoLists.length === 0
     p#no_list You don't have any lists. Why not create one?
   else 
-    p You have some lists, lets display them
+    ul#lists
+      each todoList in todoLists
+        li(class=todoList.isDone() ? "done" : "")
+          a(href=`/lists/${todoList.id}`)
+            h2= todoList.title
+            p #{todoList.allDone().size()} / #{todoList.size()}
 
 block headerLinks
   .actions
