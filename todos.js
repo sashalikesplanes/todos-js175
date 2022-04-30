@@ -4,6 +4,7 @@ const flash = require("express-flash");
 const session = require("express-session");
 const { body, validationResult } = require("express-validator");
 const TodoList = require("./lib/todolist");
+const { sortTodos, sortTodoLists } = require("./lib/sort");
 
 const app = express();
 const host = "localhost";
@@ -33,30 +34,6 @@ app.use((req, res, next) => {
   delete req.session.flash;
   next();
 });
-
-const compareByTitle = (itemA, itemB) => {
-  const titleA = itemA.title.toLowerCase();
-  const titleB = itemB.title.toLowerCase();
-  if (titleA < titleB) return -1;
-  else if (titleA > titleB) return 1;
-  else return 0;
-};
-
-const sortTodoLists = (lists) => {
-  const sortedNotDoneLists = lists
-    .filter((list) => !list.isDone())
-    .sort(compareByTitle);
-  const sortedDoneLists = lists
-    .filter((list) => list.isDone())
-    .sort(compareByTitle);
-  return sortedNotDoneLists.concat(sortedDoneLists);
-};
-
-const sortTodos = (list) => {
-  const done = list.todos.filter((todo) => todo.isDone());
-  const undone = list.todos.filter((todo) => !todo.isDone());
-  return undone.sort(compareByTitle).concat(done.sort(compareByTitle));
-};
 
 const loadTodoList = (id) =>
   todoLists.find((todoList) => String(todoList.id) === id);
