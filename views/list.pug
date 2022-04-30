@@ -17,13 +17,13 @@ block main
     ul 
       each todo in todos 
         li(class=todo.isDone() ? "done" : "")
-        form.check(action=`/lists/${todoList.id}/todos/${todo.id}/toggle`, method="post")
-          input(type="hidden" name="done" value=!todo.isDone())
-          button Done
-        
-        h3= todo.title 
-        form.delete(action=`/lists/${todoList.id}/todos/${todo.id}/destroy`, method="post")
-          button Delete
+          form.check(action=`/lists/${todoList.id}/todos/${todo.id}/toggle`, method="post")
+            input(type="hidden" name="done" value=!todo.isDone())
+            button Done
+          
+          h3= todo.title 
+          form.delete(action=`/lists/${todoList.id}/todos/${todo.id}/destroy`, method="post")
+            button Delete
     
     form(action=`/lists/${todoList.id}/todos` method="post")
       dl 
@@ -34,6 +34,6 @@ block main
       fieldset.action 
         button Add
 
-block headerlinks 
+block headerLinks 
   .actions
     a.list(href="/lists") View all lists

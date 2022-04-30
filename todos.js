@@ -34,9 +34,9 @@ app.use((req, res, next) => {
   next();
 });
 
-const compareByTitle = (listA, listB) => {
-  const titleA = listA.title.toLowerCase();
-  const titleB = listB.title.toLowerCase();
+const compareByTitle = (itemA, itemB) => {
+  const titleA = itemA.title.toLowerCase();
+  const titleB = itemB.title.toLowerCase();
   if (titleA < titleB) return -1;
   else if (titleA > titleB) return 1;
   else return 0;
@@ -52,6 +52,15 @@ const sortTodoLists = (lists) => {
   return sortedNotDoneLists.concat(sortedDoneLists);
 };
 
+const sortTodos = (list) => {
+  const done = list.todos.filter((todo) => todo.isDone());
+  const undone = list.todos.filter((todo) => !todo.isDone());
+  return undone.sort(compareByTitle).concat(done.sort(compareByTitle));
+};
+
+const loadTodoList = (id) =>
+  todoLists.find((todoList) => String(todoList.id) === id);
+
 app.get("/", (req, res) => {
   res.redirect("/lists");
 });
@@ -62,6 +71,19 @@ app.get("/lists", (req, res) => {
 
 app.get("/lists/new", (req, res) => {
   res.render("new-list");
+});
+
+app.get("/lists/:todoListId", (req, res, next) => {
+  const todoListId = req.params.todoListId;
+  const todoList = loadTodoList(todoListId);
+  if (todoList === undefined) {
+    next(new Error("Not found"));
+  } else {
+    res.render("list", {
+      todoList,
+      todos: sortTodos(todoList),
+    });
+  }
 });
 
 app.post(
@@ -91,5 +113,10 @@ app.post(
     }
   }
 );
+
+app.use((err, req, res, next) => {
+  console.log(err);
+  res.status(404).send(err.msg);
+});
 
 app.listen(port, host, () => console.log(`Listening on ${port} of ${host}`));
