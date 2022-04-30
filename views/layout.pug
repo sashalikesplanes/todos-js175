@@ -15,5 +15,12 @@ html(lang="en-GB")
       block headerLinks
 
     main
+      - const flashTypes = Object.keys(flash || {})
+      if flashTypes.length > 0
+        ul 
+          each flashType in flashTypes 
+            each message in flash[flashType]
+              li.flash(class=flashType)= message
+
       block main
 
