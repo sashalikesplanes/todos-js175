@@ -6,8 +6,8 @@ block main
       h2 Editing '#{todoList.title}'
       ul 
         li 
-          form(action=`/lists/${todoList.id}/destroy` method="post")
-            button.delete(type="submit") Delete List
+          form.delete(action=`/lists/${todoList.id}/destroy` method="post")
+            button.delete Delete List
 
   form(action=`/lists/${todoList.id}/edit` method="post")
     dl 
