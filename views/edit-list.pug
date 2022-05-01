@@ -1,5 +1,20 @@
 extends layout 
 
 block main 
+  section#todos
+    header 
+      h2 Editing '#{todoList.title}'
+      ul 
+        li 
+          form(action=`/lists/${todoList.id}/destroy` method="post")
+            button.delete(type="submit") Delete List
 
-block headerLinks
+  form(action=`/lists/${todoList.id}` method="post")
+    dl 
+      dt
+        label(for="todoListTitle") Enter the new title for the list: 
+      dd 
+        input(type="text" name="todoListTitle" id="todoListTitle" value=todoListTitle || todoList.title)
+    fieldset 
+      input(type="submit" value="Save")
+      a(href="/lists") Cancel

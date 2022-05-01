@@ -70,6 +70,11 @@ app.get("/lists/:todoListId", (req, res, next) => {
   }
 });
 
+// Test for the edit-list page
+app.get("/test", (req, res) => {
+  res.render("edit-list", { todoList: todoLists[0] });
+});
+
 // Add new todo list
 app.post(
   "/lists",
@@ -181,6 +186,7 @@ app.post(
     }
   }
 );
+
 app.use((err, req, res, next) => {
   console.log(err);
   res.status(404).send(err.msg);
