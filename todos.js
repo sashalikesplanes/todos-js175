@@ -34,8 +34,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const loadTodoList = (id) =>
-  todoLists.find((todoList) => String(todoList.id) === id);
+const loadTodoList = (id) => todoLists.find((todoList) => todoList.id === id);
 
 const loadTodo = (todoListId, todoId) => {
   const selectedTodoList = todoLists.find((list) => list.id === todoListId);
@@ -59,7 +58,7 @@ app.get("/lists/new", (req, res) => {
 // View a Single Todo List
 app.get("/lists/:todoListId", (req, res, next) => {
   const todoListId = req.params.todoListId;
-  const todoList = loadTodoList(todoListId);
+  const todoList = loadTodoList(+todoListId);
   if (todoList === undefined) {
     next(new Error("Not found"));
   } else {
@@ -113,6 +112,22 @@ app.post("/lists/:todoListId/todos/:todoId/toggle", (req, res, next) => {
       selectedTodo.markDone();
       req.flash("success", "Todo marked Done");
     }
+    res.redirect(`/lists/${todoListId}`);
+  }
+});
+
+// Delete a todo
+app.post("/lists/:todoListId/todos/:todoId/destroy", (req, res, next) => {
+  const { todoListId, todoId } = { ...req.params };
+  const selectedList = loadTodoList(+todoListId);
+  const selectedTodo = loadTodo(+todoListId, +todoId);
+
+  if (!selectedTodo || !selectedList) {
+    next(new Error("Not found"));
+  } else {
+    const todoIndex = selectedList.findIndexOf(selectedTodo);
+    selectedList.removeAt(todoIndex);
+    req.flash("success", "Todo Deleted");
     res.redirect(`/lists/${todoListId}`);
   }
 });
