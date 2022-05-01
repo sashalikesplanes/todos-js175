@@ -15,7 +15,6 @@ const { urlencoded } = require("express");
 
 app.set("views", "./views");
 app.set("view engine", "pug");
-console.log("hello woooorld");
 
 app.use(morgan("common"));
 app.use(express.static("public"));
@@ -38,6 +37,13 @@ app.use((req, res, next) => {
 const loadTodoList = (id) =>
   todoLists.find((todoList) => String(todoList.id) === id);
 
+const loadTodo = (todoListId, todoId) => {
+  const selectedTodoList = todoLists.find((list) => list.id === todoListId);
+  if (selectedTodoList) {
+    return selectedTodoList.findById(todoId);
+  } else return undefined;
+};
+
 app.get("/", (req, res) => {
   res.redirect("/lists");
 });
@@ -50,6 +56,7 @@ app.get("/lists/new", (req, res) => {
   res.render("new-list");
 });
 
+// View a Single Todo List
 app.get("/lists/:todoListId", (req, res, next) => {
   const todoListId = req.params.todoListId;
   const todoList = loadTodoList(todoListId);
@@ -63,6 +70,7 @@ app.get("/lists/:todoListId", (req, res, next) => {
   }
 });
 
+// Add new todo list
 app.post(
   "/lists",
   [
@@ -90,6 +98,24 @@ app.post(
     }
   }
 );
+
+// Toggle a todo item in a specific list
+app.post("/lists/:todoListId/todos/:todoId/toggle", (req, res, next) => {
+  const { todoListId, todoId } = { ...req.params };
+  const selectedTodo = loadTodo(+todoListId, +todoId);
+  if (!selectedTodo) {
+    next(new Error("Not found"));
+  } else {
+    if (selectedTodo.isDone()) {
+      selectedTodo.markUndone();
+      req.flash("success", "Todo marked Undone");
+    } else {
+      selectedTodo.markDone();
+      req.flash("success", "Todo marked Done");
+    }
+    res.redirect(`/lists/${todoListId}`);
+  }
+});
 
 app.use((err, req, res, next) => {
   console.log(err);

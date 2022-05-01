@@ -1,7 +1,6 @@
 extends layout 
 
 block main 
-  - console.log(todoLists)
   if todoLists === undefined || todoLists.length === 0
     p#no_list You don't have any lists. Why not create one?
   else 
