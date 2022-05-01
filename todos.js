@@ -12,6 +12,7 @@ const port = 3000;
 
 let todoLists = require("./lib/seed-data");
 const { urlencoded } = require("express");
+const Todo = require("./lib/todo");
 
 app.set("views", "./views");
 app.set("view engine", "pug");
@@ -146,6 +147,39 @@ app.post("/lists/:todoListId/complete_all", (req, res, next) => {
   }
 });
 
+app.post(
+  "/lists/:todoListId/todos",
+  [
+    body("todoTitle")
+      .trim()
+      .isLength({ min: 1 })
+      .withMessage("The todo title is required.")
+      .isLength({ max: 100 })
+      .withMessage("Todo title must be between 1 and 100 characters."),
+  ],
+  (req, res, next) => {
+    const todoListId = req.params.todoListId;
+    const selectedList = loadTodoList(+todoListId);
+    if (!selectedList) next(new Error("Not found"));
+    else {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        errors.array().forEach((error) => req.flash("error", error.msg));
+        res.render("list", {
+          flash: req.flash(),
+          todoListTitle: selectedList.title,
+          todos: sortTodos(selectedList),
+          todoTitle: req.body.todoTitle,
+          todoList: selectedList,
+        });
+      } else {
+        flash("success", "Todo added to the list");
+        selectedList.add(new Todo(req.body.todoTitle));
+        res.redirect(`/lists/${todoListId}`);
+      }
+    }
+  }
+);
 app.use((err, req, res, next) => {
   console.log(err);
   res.status(404).send(err.msg);
