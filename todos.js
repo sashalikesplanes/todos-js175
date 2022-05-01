@@ -147,6 +147,7 @@ app.post("/lists/:todoListId/complete_all", (req, res, next) => {
   }
 });
 
+// Add a todo
 app.post(
   "/lists/:todoListId/todos",
   [

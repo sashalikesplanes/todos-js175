@@ -1,7 +1,6 @@
 extends layout 
 
 block main 
-  - console.log(flash)
   section#todos(class=todoList.isDone() ? "done" : "")
     header 
       h2= todoList.title 
