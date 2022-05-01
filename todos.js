@@ -70,9 +70,15 @@ app.get("/lists/:todoListId", (req, res, next) => {
   }
 });
 
-// Test for the edit-list page
-app.get("/test", (req, res) => {
-  res.render("edit-list", { todoList: todoLists[0] });
+// Edit a todo list
+app.get("/lists/:todoListId/edit", (req, res, next) => {
+  const todoListId = req.params.todoListId;
+  const selectedList = loadTodoList(+todoListId);
+  if (!selectedList) {
+    next(new Error("Not found"));
+  } else {
+    res.render("edit-list", { todoList: selectedList });
+  }
 });
 
 // Add new todo list

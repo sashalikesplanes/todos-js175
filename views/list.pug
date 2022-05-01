@@ -9,10 +9,10 @@ block main
           li 
             form.complete_all(action=`/lists/${todoList.id}/complete_all`, method="post")
               button.check(type="submit") Complete All 
-
         li 
-          from(action=`/lists/${todoList.id}/edit`, method="get")
-            button.edit(type="edit") Edit List 
+          form(action=`/lists/${todoList.id}/edit` method="get")
+            button.edit(type="submit") Edit List
+        
     
     ul 
       each todo in todos 
