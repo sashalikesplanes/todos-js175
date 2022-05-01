@@ -193,6 +193,19 @@ app.post(
   }
 );
 
+// Delete a todo list
+app.post("/lists/:todoListId/destroy", (req, res, next) => {
+  const todoListId = req.params.todoListId;
+  const selectedList = loadTodoList(+todoListId);
+  if (!selectedList) {
+    next(new Error("Not found"));
+  } else {
+    todoLists = todoLists.filter((list) => list.id !== Number(todoListId));
+    req.flash("success", "Todo list deleted");
+    res.redirect("/lists");
+  }
+});
+
 app.use((err, req, res, next) => {
   console.log(err);
   res.status(404).send(err.msg);
