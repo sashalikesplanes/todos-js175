@@ -1,7 +1,7 @@
 "use strict";
 
 document.addEventListener("DOMContentLoaded", () => {
-  let forms = document.querySelectorAll("form.delete, from.complete_all");
+  let forms = document.querySelectorAll("form.delete, form.complete_all");
   forms.forEach((form) => {
     form.addEventListener("submit", (event) => {
       event.preventDefault();

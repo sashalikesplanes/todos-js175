@@ -7,7 +7,7 @@
     "lib": "lib"
   },
   "scripts": {
-    "start": "npx nodemon todos.js",
+    "dev": "npx nodemon todos.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
