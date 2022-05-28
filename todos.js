@@ -4,7 +4,7 @@ const flash = require("express-flash");
 const session = require("express-session");
 const { body, validationResult } = require("express-validator");
 const TodoList = require("./lib/todolist");
-const { sortTodos, sortTodoLists } = require("./lib/sort");
+const { sortTodos } = require("./lib/sort");
 const store = require("connect-loki");
 const SessionPersistence = require("./lib/session-persistence");
 
@@ -76,7 +76,18 @@ app.get("/", (req, res) => {
 });
 
 app.get("/lists", (req, res) => {
-  res.render("lists", { todoLists: sortTodoLists(req.session.todoLists) });
+  const store = res.locals.store;
+  const todoLists = store.sortedTodoLists();
+
+  const todosInfo = todoLists.map((todoList) => ({
+    countAllTodos: todoList.todos.length,
+    countDoneTodos: todoList.todos.filter((todo) => todo.done).length,
+    isDone: store.isDoneTodoList(todoList),
+  }));
+  res.render("lists", {
+    todoLists,
+    todosInfo,
+  });
 });
 
 app.get("/lists/new", (req, res) => {
