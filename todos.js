@@ -6,14 +6,13 @@ const { body, validationResult } = require("express-validator");
 const TodoList = require("./lib/todolist");
 const { sortTodos, sortTodoLists } = require("./lib/sort");
 const store = require("connect-loki");
+const SessionPersistence = require("./lib/session-persistence");
 
 const app = express();
 const host = "localhost";
 const port = 3000;
 const LokiStore = store(session);
 
-// Seed Data
-// let todoLists = require("./lib/seed-data");
 const { urlencoded } = require("express");
 const Todo = require("./lib/todo");
 
@@ -45,13 +44,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use((req, res, next) => {
-  let todoLists = [];
-  if ("todoLists" in req.session) {
-    req.session.todoLists.forEach((list) => {
-      todoLists.push(TodoList.makeTodoList(list));
-    });
-  }
-  req.session.todoLists = todoLists;
+  res.locals.store = new SessionPersistence(req.session);
   next();
 });
 
