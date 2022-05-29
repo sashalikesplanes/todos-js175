@@ -48,16 +48,6 @@ app.use((req, res, next) => {
   next();
 });
 
-const loadTodoList = (id, todoLists) =>
-  todoLists.find((todoList) => todoList.id === id);
-
-const loadTodo = (todoListId, todoId, todoLists) => {
-  const selectedTodoList = todoLists.find((list) => list.id === todoListId);
-  if (selectedTodoList) {
-    return selectedTodoList.findById(todoId);
-  } else return undefined;
-};
-
 const validateTodoListTitle = [
   body("todoListTitle")
     .trim()
@@ -94,16 +84,27 @@ app.get("/lists/new", (req, res) => {
   res.render("new-list");
 });
 
+app.get("/search/:todoListId", (req, res) => {
+  let todoListId = req.params.todoListId;
+  let todoList = res.locals.store.loadTodoList(+todoListId);
+  if (todoList) {
+    res.send(`Found todo list ${todoListId} with title "${todoList.title}"`);
+  } else {
+    res.send(`Did not find todo list ${todoListId}`);
+  }
+});
+
 // View a Single Todo List
 app.get("/lists/:todoListId", (req, res, next) => {
+  const store = res.locals.store;
   const todoListId = req.params.todoListId;
-  const todoList = loadTodoList(+todoListId, req.session.todoLists);
+  const todoList = store.loadTodoList(+todoListId);
   if (todoList === undefined) {
     next(new Error("Not found"));
   } else {
     res.render("list", {
       todoList,
-      todos: sortTodos(todoList),
+      todos: store.sortedTodos(todoList),
     });
   }
 });
