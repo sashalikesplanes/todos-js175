@@ -5,7 +5,7 @@ const session = require("express-session");
 const { body, validationResult } = require("express-validator");
 const { sortTodos } = require("./lib/sort");
 const store = require("connect-loki");
-const SessionPersistence = require("./lib/session-persistence");
+const PgPersistence = require("./lib/pg-persistence");
 
 const app = express();
 const host = "localhost";
@@ -13,7 +13,6 @@ const port = 3000;
 const LokiStore = store(session);
 
 const { urlencoded } = require("express");
-const Todo = require("./lib/todo");
 
 app.set("views", "./views");
 app.set("view engine", "pug");
@@ -48,9 +47,21 @@ app.use((req, res, next) => {
   next();
 });
 
+// New datastore
 app.use((req, res, next) => {
-  res.locals.store = new SessionPersistence(req.session);
+  res.locals.store = new PgPersistence(req.session);
   next();
+});
+
+// Temp code
+app.use(async (req, res, next) => {
+  try {
+    await res.locals.store.testQ();
+    await res.locals.store.testQ2();
+    res.send("quitting");
+  } catch (e) {
+    next(e);
+  }
 });
 
 const validateTodoListTitle = [
