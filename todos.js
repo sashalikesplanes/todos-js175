@@ -6,6 +6,7 @@ const { body, validationResult } = require("express-validator");
 const { sortTodos } = require("./lib/sort");
 const store = require("connect-loki");
 const PgPersistence = require("./lib/pg-persistence");
+const catchError = require("./lib/catch-errors");
 
 const app = express();
 const host = "localhost";
@@ -70,23 +71,21 @@ app.get("/", (req, res) => {
   res.redirect("/lists");
 });
 
-app.get("/lists", async (req, res, next) => {
+app.get("/lists", catchError(async (req, res, next) => {
   const store = res.locals.store;
-  try {
-    const todoLists = await store.sortedTodoLists();
-    const todosInfo = todoLists.map((todoList) => ({
-      countAllTodos: todoList.todos.length,
-      countDoneTodos: todoList.todos.filter((todo) => todo.done).length,
-      isDone: store.isDoneTodoList(todoList),
-    }));
 
-    res.render("lists", {
-      todoLists,
-      todosInfo,
-    });
-  } catch (e) {
-    next(e);
-  }});
+  const todoLists = await store.sortedTodoLists();
+  const todosInfo = todoLists.map((todoList) => ({
+    countAllTodos: todoList.todos.length,
+    countDoneTodos: todoList.todos.filter((todo) => todo.done).length,
+    isDone: store.isDoneTodoList(todoList),
+  }));
+
+  res.render("lists", {
+    todoLists,
+    todosInfo,
+  });
+}));
 
 
 
@@ -94,32 +93,20 @@ app.get("/lists/new", (req, res) => {
   res.render("new-list");
 });
 
-app.get("/search/:todoListId", (req, res) => {
-  let todoListId = req.params.todoListId;
-  let todoList = res.locals.store.loadTodoList(+todoListId);
-
-  if (todoList) {
-    res.send(`Found todo list ${todoListId} with title "${todoList.title}"`);
-  }
-
-  res.send(`Did not find todo list ${todoListId}`);
-});
-
 // View a Single Todo List
-app.get("/lists/:todoListId", (req, res, next) => {
+app.get("/lists/:todoListId", catchError(async (req, res, next) => {
   const store = res.locals.store;
   const todoListId = req.params.todoListId;
-  const todoList = store.loadTodoList(+todoListId);
 
-  if (todoList === undefined) {
-    next(new Error("Not found"));
-  }
+  const todoList = await store.loadTodoList(+todoListId);
+
+  if (todoList === undefined) throw new Error("Not found");
 
   res.render("list", {
     todoList,
-    todos: store.sortedTodos(todoList),
+    todos: await store.sortedTodos(todoList),
   });
-});
+}));
 
 // Edit a todo list
 app.get("/lists/:todoListId/edit", (req, res, next) => {
@@ -163,30 +150,31 @@ app.post("/lists", validateTodoListTitle, (req, res) => {
 });
 
 // Toggle a todo item in a specific list
-app.post("/lists/:todoListId/todos/:todoId/toggle", (req, res, next) => {
+app.post("/lists/:todoListId/todos/:todoId/toggle", catchError(async (req, res) => {
   const { todoListId, todoId } = { ...req.params };
-  const toggledTodo = res.locals.store.toggleTodoCompletion(+todoListId, +todoId);
+  const toggledTodo = await res.locals.store.toggleTodoCompletion(+todoListId, +todoId);
 
-  if (toggledTodo === undefined) {
-    next(new Error("Not found"));
+  if (!toggledTodo) {
+    throw new Error("Not found");
   } 
 
-  req.flash("success", `Todo marked ${toggledTodo.done ? "Done" : "Undone"}`);
+  const todo = await res.locals.store.loadTodo(+todoListId, +todoId);
+  req.flash("success", `Todo marked ${todo.done ? "Done" : "Undone"}`);
   res.redirect(`/lists/${todoListId}`);
-});
+}));
 
 // Delete a todo
-app.post("/lists/:todoListId/todos/:todoId/destroy", (req, res, next) => {
+app.post("/lists/:todoListId/todos/:todoId/destroy", catchError(async (req, res) => {
   const { todoListId, todoId } = { ...req.params };
-  const deletedTodo = res.locals.store.deleteTodo(+todoListId, +todoId);
+  const deleted = await res.locals.store.deleteTodo(+todoListId, +todoId);
 
-  if (deletedTodo === undefined) {
-    next(new Error("Not found"));
+  if (!deleted) {
+    throw new Error("Not found");
   }
 
-  req.flash("success", `Todo - ${deletedTodo.title} deleted`);
+  req.flash("success", `Todo deleted`);
   res.redirect(`/lists/${todoListId}`);
-});
+}));
 
 // Mark all todos in a list as done
 app.post("/lists/:todoListId/complete_all", (req, res, next) => {
