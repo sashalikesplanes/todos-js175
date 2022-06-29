@@ -53,17 +53,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Temp code
-app.use(async (req, res, next) => {
-  try {
-    await res.locals.store.testQ();
-    await res.locals.store.testQ2();
-    res.send("quitting");
-  } catch (e) {
-    next(e);
-  }
-});
-
 const validateTodoListTitle = [
   body("todoListTitle")
     .trim()
@@ -81,21 +70,25 @@ app.get("/", (req, res) => {
   res.redirect("/lists");
 });
 
-app.get("/lists", (req, res) => {
+app.get("/lists", async (req, res, next) => {
   const store = res.locals.store;
-  const todoLists = store.sortedTodoLists();
+  try {
+    const todoLists = await store.sortedTodoLists();
+    const todosInfo = todoLists.map((todoList) => ({
+      countAllTodos: todoList.todos.length,
+      countDoneTodos: todoList.todos.filter((todo) => todo.done).length,
+      isDone: store.isDoneTodoList(todoList),
+    }));
 
-  const todosInfo = todoLists.map((todoList) => ({
-    countAllTodos: todoList.todos.length,
-    countDoneTodos: todoList.todos.filter((todo) => todo.done).length,
-    isDone: store.isDoneTodoList(todoList),
-  }));
+    res.render("lists", {
+      todoLists,
+      todosInfo,
+    });
+  } catch (e) {
+    next(e);
+  }});
 
-  res.render("lists", {
-    todoLists,
-    todosInfo,
-  });
-});
+
 
 app.get("/lists/new", (req, res) => {
   res.render("new-list");
