@@ -25,3 +25,16 @@ html(lang="en-GB")
 
       block main
 
+  footer
+    block signIn
+      if !signedIn
+        form(action="/users/signin" method="get")
+          fieldset.action
+            p You are not signed in
+            button Sign In
+      else
+        form(action="/users/signout" method="post")
+          fieldset.action
+            p Signed in as #{username}
+            button Sign Out
+

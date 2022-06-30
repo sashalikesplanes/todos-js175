@@ -44,6 +44,8 @@ app.use(flash());
 
 app.use((req, res, next) => {
   res.locals.flash = req.session.flash;
+  res.locals.username = req.session.username;
+  res.locals.signedIn = req.session.signedIn;
   delete req.session.flash;
   next();
 });
@@ -121,8 +123,30 @@ app.get("/lists/:todoListId/edit", catchError(async (req, res) => {
   res.render("edit-list", { todoList: selectedList });
 }));
 
+app.get("/users/signin", (req, res) => {
+  req.flash("info", "Please sign in.");
+  res.render("signin", { flash: req.flash() });
+});
+
+// Process user sign in
+app.post("/users/signin", (req, res) => {
+  const username = req.body.username.trim();
+  const password = req.body.password;
+
+  if (username === "sasha" && password === "secret") {
+    req.session.username = username;
+    req.session.signedIn = true;
+
+    req.flash("success", "Welcome!");
+    res.redirect("/lists");
+  } else {
+    req.flash("error", "Invalid Credentials");
+    res.render("signin", { flash: req.flash(), username });
+  }
+});
+
 // Add new todo list
-app.post("/lists", validateTodoListTitle, (req, res) => {
+app.post("/lists", validateTodoListTitle, catchError(async (req, res) => {
   const errors = validationResult(req);
 
   const rerender = () => {
@@ -135,20 +159,18 @@ app.post("/lists", validateTodoListTitle, (req, res) => {
   if (!errors.isEmpty()) {
     errors.array().forEach((message) => req.flash("error", message.msg));
     rerender()
-  } 
+  } else if (await res.locals.store.existsTodoListTitle(req.body.todoListTitle)) {
+    req.flash("error", "Todo list with title already exists");
+  } else {
+    const created = await res.locals.store.createTodoList(req.body.todoListTitle);
+    if (!created) {
+      throw new Error("Failed to create list");
+    }
 
-  if (res.locals.store.existsTodoListTitle(req.body.todoListTitle)) {
-    flash("error", "Todo list with title already exists");
+    req.flash("success", "New todo list created successfully");
+    res.redirect("/lists");
   }
-
-  const created = res.locals.store.createTodoList(req.body.todoListTitle);
-  if (!created) {
-    next(new Error("Failed to create list"));
-  }
-
-  req.flash("success", "New todo list created successfully");
-  res.redirect("/lists");
-});
+}));
 
 // Toggle a todo item in a specific list
 app.post("/lists/:todoListId/todos/:todoId/toggle", catchError(async (req, res) => {
