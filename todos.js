@@ -135,11 +135,11 @@ app.get("/users/signin", (req, res) => {
 });
 
 // Process user sign in
-app.post("/users/signin", (req, res) => {
+app.post("/users/signin", catchError(async (req, res) => {
   const username = req.body.username.trim();
   const password = req.body.password;
 
-  if (username === "sasha" && password === "secret") {
+  if (await res.locals.store.isValidUser(username, password)) {
     req.session.username = username;
     req.session.signedIn = true;
 
@@ -149,7 +149,7 @@ app.post("/users/signin", (req, res) => {
     req.flash("error", "Invalid Credentials");
     res.render("signin", { flash: req.flash(), username });
   }
-});
+}));
 
 app.post("/users/signout", (req, res) => {
   delete req.session.username;
