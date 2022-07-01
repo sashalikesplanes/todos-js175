@@ -15,6 +15,26 @@ const LokiStore = store(session);
 
 const { urlencoded } = require("express");
 
+const validateTodoListTitle = [
+  body("todoListTitle")
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage("The list title is required.")
+    .isLength({ max: 100 })
+    .withMessage("List title must be between 1 and 100 characters.")
+    // .custom((title, { req }) =>
+      // req.session.todoLists.every((list) => list.title !== title)
+    // )
+    // .withMessage("List title must be unique"),
+];
+
+const requiresAuth = (req, res, next) => {
+  if (!res.locals.signedIn) {
+    console.log("Unauthorized");
+    res.status(401).send("Unauthorized.");
+  } else next();
+};
+
 app.set("views", "./views");
 app.set("view engine", "pug");
 
@@ -26,8 +46,7 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use(
   session({
-    cookie: {
-      httpOnly: true,
+    cookie: { httpOnly: true,
       maxAge: 31 * 24 * 60 * 60 * 1000,
       path: "/",
       secure: false,
@@ -56,19 +75,6 @@ app.use((req, res, next) => {
   next();
 });
 
-const validateTodoListTitle = [
-  body("todoListTitle")
-    .trim()
-    .isLength({ min: 1 })
-    .withMessage("The list title is required.")
-    .isLength({ max: 100 })
-    .withMessage("List title must be between 1 and 100 characters.")
-    // .custom((title, { req }) =>
-      // req.session.todoLists.every((list) => list.title !== title)
-    // )
-    // .withMessage("List title must be unique"),
-];
-
 app.get("/", (req, res) => {
   res.redirect("/lists");
 });
@@ -91,7 +97,7 @@ app.get("/lists", catchError(async (req, res, next) => {
 
 
 
-app.get("/lists/new", (req, res) => {
+app.get("/lists/new", requiresAuth, (req, res) => {
   res.render("new-list");
 });
 
@@ -112,7 +118,7 @@ app.get("/lists/:todoListId", catchError(async (req, res, next) => {
 }));
 
 // Edit a todo list
-app.get("/lists/:todoListId/edit", catchError(async (req, res) => {
+app.get("/lists/:todoListId/edit", requiresAuth, catchError(async (req, res) => {
   const todoListId = req.params.todoListId;
   const selectedList = await res.locals.store.loadTodoList(+todoListId);
 
@@ -145,8 +151,15 @@ app.post("/users/signin", (req, res) => {
   }
 });
 
+app.post("/users/signout", (req, res) => {
+  delete req.session.username;
+  delete req.session.signedIn;
+
+  res.redirect("/users/signin");
+});
+
 // Add new todo list
-app.post("/lists", validateTodoListTitle, catchError(async (req, res) => {
+app.post("/lists", validateTodoListTitle, requiresAuth, catchError(async (req, res) => {
   const errors = validationResult(req);
 
   const rerender = () => {
@@ -173,7 +186,7 @@ app.post("/lists", validateTodoListTitle, catchError(async (req, res) => {
 }));
 
 // Toggle a todo item in a specific list
-app.post("/lists/:todoListId/todos/:todoId/toggle", catchError(async (req, res) => {
+app.post("/lists/:todoListId/todos/:todoId/toggle", requiresAuth, catchError(async (req, res) => {
   const { todoListId, todoId } = { ...req.params };
   const toggledTodo = await res.locals.store.toggleTodoCompletion(+todoListId, +todoId);
 
@@ -187,7 +200,7 @@ app.post("/lists/:todoListId/todos/:todoId/toggle", catchError(async (req, res) 
 }));
 
 // Delete a todo
-app.post("/lists/:todoListId/todos/:todoId/destroy", catchError(async (req, res) => {
+app.post("/lists/:todoListId/todos/:todoId/destroy", requiresAuth, catchError(async (req, res) => {
   const { todoListId, todoId } = { ...req.params };
   const deleted = await res.locals.store.deleteTodo(+todoListId, +todoId);
 
@@ -200,7 +213,7 @@ app.post("/lists/:todoListId/todos/:todoId/destroy", catchError(async (req, res)
 }));
 
 // Mark all todos in a list as done
-app.post("/lists/:todoListId/complete_all", catchError(async (req, res) => {
+app.post("/lists/:todoListId/complete_all", requiresAuth, catchError(async (req, res) => {
   const todoListId = req.params.todoListId;
   const completed = await res.locals.store.markAllDone(+todoListId);
 
@@ -223,7 +236,7 @@ app.post(
       .isLength({ max: 100 })
       .withMessage("Todo title must be between 1 and 100 characters."),
   ],
-  catchError(async (req, res) => {
+  requiresAuth, catchError(async (req, res) => {
     const todoListId = req.params.todoListId;
     const selectedList = await res.locals.store.loadTodoList(+todoListId);
 
@@ -247,11 +260,10 @@ app.post(
     flash("success", "Todo added to the list");
     await res.locals.store.addTodo(+todoListId, req.body.todoTitle);
     res.redirect(`/lists/${todoListId}`);
-  }
-));
+  }));
 
 // Delete a todo list
-app.post("/lists/:todoListId/destroy", catchError(async (req, res) => {
+app.post("/lists/:todoListId/destroy", requiresAuth, catchError(async (req, res) => {
   const todoListId = req.params.todoListId;
   const deleted = await res.locals.store.deleteList(+todoListId);
 
@@ -264,7 +276,7 @@ app.post("/lists/:todoListId/destroy", catchError(async (req, res) => {
 }));
 
 // Edit title of todo list
-app.post("/lists/:todoListId/edit", validateTodoListTitle, catchError(async (req, res) => {
+app.post("/lists/:todoListId/edit", validateTodoListTitle, requiresAuth, catchError(async (req, res) => {
   const todoListId = +req.params.todoListId;
 
   const rerenderList = async () => {
