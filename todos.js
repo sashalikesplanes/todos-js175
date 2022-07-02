@@ -1,3 +1,4 @@
+const config = require("./lib/config");
 const express = require("express");
 const morgan = require("morgan");
 const flash = require("express-flash");
@@ -9,8 +10,8 @@ const PgPersistence = require("./lib/pg-persistence");
 const catchError = require("./lib/catch-errors");
 
 const app = express();
-const host = "localhost";
-const port = 3000;
+const host = config.HOST;
+const port = config.PORT;
 const LokiStore = store(session);
 
 const { urlencoded } = require("express");
@@ -22,10 +23,6 @@ const validateTodoListTitle = [
     .withMessage("The list title is required.")
     .isLength({ max: 100 })
     .withMessage("List title must be between 1 and 100 characters.")
-    // .custom((title, { req }) =>
-      // req.session.todoLists.every((list) => list.title !== title)
-    // )
-    // .withMessage("List title must be unique"),
 ];
 
 const requiresAuth = (req, res, next) => {
@@ -54,7 +51,7 @@ app.use(
     name: "launch-school-todos-session-id",
     resave: false,
     saveUninitialized: true,
-    secret: "this is not secure",
+    secret: config.SECRET,
     store: new LokiStore({}),
   })
 );

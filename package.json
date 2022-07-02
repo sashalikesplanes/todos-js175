@@ -7,7 +7,7 @@
     "lib": "lib"
   },
   "scripts": {
-    "dev": "npx nodemon todos.js",
+    "start": "npx nodemon todos.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -23,6 +23,7 @@
   "dependencies": {
     "bcrypt": "^5.0.1",
     "connect-loki": "^1.2.0",
+    "dotenv": "^16.0.1",
     "express": "^4.18.1",
     "express-flash": "^0.0.2",
     "express-session": "^1.17.2",
@@ -32,6 +33,6 @@
     "pug": "^3.0.2"
   },
   "devDependencies": {
-    "nodemon": "^2.0.16"
+    "nodemon": "^1.3.3"
   }
 }
