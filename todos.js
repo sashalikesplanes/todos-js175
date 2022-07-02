@@ -31,7 +31,7 @@ const validateTodoListTitle = [
 const requiresAuth = (req, res, next) => {
   if (!res.locals.signedIn) {
     console.log("Unauthorized");
-    res.status(401).send("Unauthorized.");
+    res.status(302).redirect("/users/signin");
   } else next();
 };
 
@@ -79,7 +79,7 @@ app.get("/", (req, res) => {
   res.redirect("/lists");
 });
 
-app.get("/lists", catchError(async (req, res, next) => {
+app.get("/lists", requiresAuth, catchError(async (req, res, next) => {
   const store = res.locals.store;
 
   const todoLists = await store.sortedTodoLists();
@@ -102,7 +102,7 @@ app.get("/lists/new", requiresAuth, (req, res) => {
 });
 
 // View a Single Todo List
-app.get("/lists/:todoListId", catchError(async (req, res, next) => {
+app.get("/lists/:todoListId", requiresAuth, catchError(async (req, res, next) => {
   const store = res.locals.store;
   const todoListId = req.params.todoListId;
 
